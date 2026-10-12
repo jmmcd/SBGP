@@ -3,54 +3,20 @@
 from pathlib import Path
 import numpy as np
 import pandas as pd
-from dataclasses import dataclass
-from typing import Optional, Callable
 np.seterr(all='raise')
 from sklearn.model_selection import train_test_split
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.utils import check_random_state
 
 from .grammar import Grammar, derive_string
-from .exceptions import *
-from .fitness import evaluate, one_m_r2, latex_eqn, sympy_canonicalize
+from .exceptions import (
+    DuplicateIndividualException,
+    InvalidIndividualException,
+    SingularityException,
+)
+from .fitness import evaluate, latex_eqn
 from .iv import generate_bounds
-
-@dataclass
-class Individual:
-    """Represents an individual equation in the population."""
-    used_codons: int
-    train_loss: float
-    validation_loss: Optional[float]
-    equation_str: str  # ps - raw equation string
-    equation_with_consts: str  # psc - equation with optimized constants
-    equation_fn: Callable  # p - function that takes (X, C)
-    optimized_consts: np.ndarray  # newc - optimized constants
-    equation_fn_with_consts: Callable  # newp - function with constants built in
-    equation_fn_transpose: Callable  # p_transpose - function that accepts sklearn format X
-    genome: np.ndarray
-    n_vars_used: Optional[int] = None
-    n_consts_used: Optional[int] = None
-    latex: Optional[str] = None
-
-
-    @classmethod
-    def from_evaluation(cls, used_codons: int, genome: np.ndarray, eval_result: tuple):
-        """Create Individual from evaluation result."""
-        cost, cost_test, ps, psc, p, newc, newp, p_transpose, n_vars_used, n_consts_used = eval_result
-        return cls(
-            used_codons=used_codons,
-            train_loss=cost,
-            validation_loss=cost_test,
-            equation_str=ps,
-            equation_with_consts=psc,
-            equation_fn=p,
-            optimized_consts=newc,
-            equation_fn_with_consts=newp,
-            equation_fn_transpose=p_transpose,
-            genome=genome.copy(),
-            n_vars_used=n_vars_used,
-            n_consts_used=n_consts_used
-        )
+from .individual import Individual
 
 class SBGPRegressor(BaseEstimator, RegressorMixin):
     def __init__(self,

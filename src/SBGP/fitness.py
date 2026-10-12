@@ -7,6 +7,21 @@ from .exceptions import *
 from .iv import Iv, iv_fn_mappings
 
 
+def round_sig(x, sig=2):
+    if x == 0:
+        return 0
+    return round(x, sig - int(math.floor(math.log10(abs(x)))) - 1)
+
+
+def constant_complexity(c):
+    if np.isclose(c, round(c), atol=1e-12):
+        return 0
+    s = f"{c:.10f}".rstrip('0').rstrip('.')
+    if '.' in s:
+        return len(s.split('.')[1])
+    return 0
+
+
 # currently unused, not really tested yet
 def sympy_canonicalize(ps):
     """Simplify ps with SymPy and rename constants by first appearance.
@@ -125,6 +140,7 @@ def latex_eqn(ps, varnames):
     return s
 
 def simplify(p, n_vars):
+    import sympy
     X = sympy.symbols(f"X:{n_vars}")
     C = sympy.symbols(f"C:{n_vars}")
     s = p(X, C)
